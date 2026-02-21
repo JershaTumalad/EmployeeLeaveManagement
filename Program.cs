@@ -6,6 +6,8 @@ namespace EmployeeLeaveManagement
     {
         static void Main(string[] args)
         {
+            
+
             Console.WriteLine("Welcome to Employee Leave Management System");
             Console.WriteLine("1. Show Leave Types");
             Console.WriteLine("2. Apply Leave");
@@ -60,8 +62,8 @@ namespace EmployeeLeaveManagement
             }
             static void ApplyLeave()
             {
-                Console.WriteLine("Enter name:");
-                string name = Console.ReadLine();
+                Console.WriteLine("Enter Employee ID:");
+                string ID = Console.ReadLine();
 
                 Console.WriteLine("Types: ");
                 Console.WriteLine("1. Vacation");
