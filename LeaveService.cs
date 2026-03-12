@@ -1,9 +1,13 @@
-﻿using System.Data;
+using System.Data;
+
+﻿using System;
+
 
 namespace EmployeeLeaveManagement
 {
     public class LeaveService
     {
+
         private LeaveRep repository = new LeaveRep();
 
         private string[] validLeaveTypes = { "Vacation", "Sick", "Emergency" };
@@ -93,6 +97,16 @@ namespace EmployeeLeaveManagement
             }
 
             return "Can not find employee request.";
+
+        public bool HasSufficientPoints(int currentPoints, int requiredPoints)
+        {
+            return currentPoints >= requiredPoints;
+        }
+
+        public bool IsValidDate(DateTime date)
+        {
+            return date >= DateTime.Today;
+
         }
     }
 }
