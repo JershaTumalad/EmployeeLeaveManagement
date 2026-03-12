@@ -5,11 +5,11 @@ namespace EmployeeLeaveManagement
     public class LeaveRep
     {
         private List<LeaveReq> leaveRequests = new List<LeaveReq>();
-        private int lastID = 0; 
+        private int lastID = 0; //number para sa nagbibilang/counter
 
         public void AddLeave(LeaveReq request)
         {
-            lastID++;
+            lastID++;//nagaadd
             request.RequestID = lastID;
             leaveRequests.Add(request);
         }

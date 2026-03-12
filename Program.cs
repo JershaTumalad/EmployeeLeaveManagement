@@ -4,7 +4,7 @@ namespace EmployeeLeaveManagement
 {
     internal class Program
     {
-        //ito yung part na magcconnect and LeaveService at Program/mainclass
+        //ito yung part na magcconnect and LeaveService at Program
         static LeaveService sr = new LeaveService();
         static void Main(string[] args)
         {
@@ -47,72 +47,85 @@ namespace EmployeeLeaveManagement
 
             static void ShowLeaveTypes()
             {
-                string[] LeaveTypes = { "Vacation", "Sick", "Emergency" };
-
-                Console.WriteLine("Types: ");
+                Console.WriteLine("\nLEAVE TYPES ");
                 Console.WriteLine("[1] Vacation");
                 Console.WriteLine("[2] Sick");
                 Console.WriteLine("[3] Emergency");
-                Console.WriteLine("[0] Exit");
-                Console.Write("Please select a leave type:");
-                int Leave = Convert.ToInt32(Console.ReadLine());
 
-                switch (Leave)
-                {
-                    case 1:
-                        Console.WriteLine("You have selected Vacation leave.");
-                        break;
-                    case 2:
-                        Console.WriteLine("You have selected Sick leave.");
-                        break;
-                    case 3:
-                        Console.WriteLine("You have selected Emergency leave.");
-                        break;
-                    case 0:
-                        Console.WriteLine("Exiting the system.");
-                        break;
-                }
-
-            }
-
-            static void ApplyLeave()
-            {
-            Console.WriteLine("Do you want to request leave? (Y/N): ");
-            char response = Console.ReadLine().ToUpper()[0];
+                // iask ni system kung magaapply ba si user ng leave
+                Console.Write("\nGusto mo bang mag-apply ng leave? (Y/N): ");
+                char response = Console.ReadLine().ToUpper()[0];
 
                 if (response == 'Y')
                 {
-                    Console.WriteLine("Applying for leave...\n");
-                    string[] EmployeeID;
-                    Console.Write("Enter Employee ID:");
-                    string ID = Console.ReadLine();
+                    ApplyLeave();
+                }
+                else if (response == 'N')
+                {
+                    Console.WriteLine("Exiting program.");
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input. Please enter Y or N.");
+                }
+            }
 
-                    Console.WriteLine("Types: ");
-                    Console.WriteLine("[1] Vacation");
-                    Console.WriteLine("[2] Sick");
-                    Console.WriteLine("[3] Emergency");
-                    Console.WriteLine("[0] Exit");
-                    Console.Write("Enter the leave type you want to apply for:");
-                    int Leave = Convert.ToInt32(Console.ReadLine());
 
-                    string leaveType = "";
-                    if (Leave == 1)
-                        leaveType = "Vacation";
-                    else if (Leave == 2)
-                        leaveType = "Sick";
-                    else if (Leave == 3)
-                        leaveType = "Emergency";
-                    else
+            static void ApplyLeave()
+            {
+                Console.Write("\nDo you want to request leave? (Y/N): ");
+                char response = Console.ReadLine().ToUpper()[0];
+
+                if (response == 'Y')
+                {
+                    //do while loop para makaapply ulit si user 
+                    do
                     {
-                        Console.WriteLine("Invalid leave type");
-                        return;
-                    }
+                        Console.Write("Enter Employee ID: ");
+                        string employeeID = Console.ReadLine();
 
-                    Console.Write("Enter Start Date (ex. 2025-12-01: )");
-                    string startDate = Console.ReadLine();
+                        Console.WriteLine("Leave Types: ");
+                        Console.WriteLine("[1] Vacation");
+                        Console.WriteLine("[2] Sick");
+                        Console.WriteLine("[3] Emergency");
+                        Console.Write("Enter the leave type you want to apply for: ");
+                        int leave = Convert.ToInt32(Console.ReadLine());
 
-                    Console.Write("Enter End Date (ex. 2025-12-05: )");
-                    string endtDate = Console.ReadLine();
+                        string leaveType = "";
+                        if (leave == 1) 
+                            leaveType = "Vacation";
+                        else if (leave == 2) 
+                            leaveType = "Sick";
+                        else if (leave == 3) 
+                            leaveType = "Emergency";
+                        else
+                        {
+                            Console.WriteLine("Invalid leave type!");
+                            continue; // maglo-loop na dito
+                        }
+
+                        Console.Write("Enter Start Date (ex.2025-12-01): ");
+                        string startDate = Console.ReadLine();
+
+                        Console.Write("Enter End Date (ex.2025-12-05): ");
+                        string endDate = Console.ReadLine();
+
+                        //display
+                        Console.WriteLine("\nLEAVE REQUEST");
+                        Console.WriteLine($"Employee ID : {employeeID}");
+                        Console.WriteLine($"Leave Type  : {leaveType}");
+                        Console.WriteLine($"Start Date  : {startDate}");
+                        Console.WriteLine($"End Date    : {endDate}");
+
+                        string result = sr.ApplyLeave(employeeID, leaveType, startDate, endDate);
+                        Console.WriteLine(result);
+
+                        //tatanungin si user kung gusto pa niya ulit magapply ng leave req
+                        Console.Write("\nGusto mo pa bang mag-apply ng another leave? (Y/N): ");
+                        response = Console.ReadLine().ToUpper()[0];
+
+                    } while (response == 'Y'); // Kapag Y uulit, 'pag N hindi na
+                    Console.WriteLine("Exiting the system.");
                 }
                 else if (response == 'N')
                 {
@@ -122,8 +135,6 @@ namespace EmployeeLeaveManagement
                 {
                     Console.WriteLine("Invalid input. Please enter Y or N.");
                 }
-
-
             }
 
             static void ViewReq()
@@ -133,13 +144,53 @@ namespace EmployeeLeaveManagement
 
             static void UpdateReq()
             {
-                Console.WriteLine();
+                    Console.Write("Enter Request ID to update: ");
+                    int requestID = Convert.ToInt32(Console.ReadLine());
+
+                    Console.WriteLine("Select new status:");
+                    Console.WriteLine("[1] Approved");
+                    Console.WriteLine("[2] Rejected");
+                    Console.WriteLine("[3] Pending");
+                    Console.Write("Enter your choice: ");
+                    int choice = Convert.ToInt32(Console.ReadLine());
+
+                    string newStatus = "";
+                    if (choice == 1) 
+                    newStatus = "Approved";
+                    else if (choice == 2) 
+                    newStatus = "Rejected";
+                    else if (choice == 3) 
+                    newStatus = "Pending";
+                    else
+                    {
+                        Console.WriteLine("Invalid choice!");
+                        return;
+                    }
+
+                    string result = sr.UpdateLeave(requestID, newStatus);
+                    Console.WriteLine(result);
+                }
             }
 
+          
             static void DeleteReq()
             {
-                Console.WriteLine();
+                Console.Write("Enter Request ID to delete: ");
+                int requestID = Convert.ToInt32(Console.ReadLine());
+
+                // magtatanong muna sa user kung sigurado ba
+                Console.Write("Are you sure you want to delete this request? (Y/N): ");
+                char confirm = Console.ReadLine().ToUpper()[0];
+
+                if (confirm == 'Y')
+                {
+                    string result = sr.DeleteLeave(requestID);
+                    Console.WriteLine(result);
+                }
+                else
+                {
+                    Console.WriteLine("Delete cancelled.");
+                }
             }
         }
-    }
-}
+        }
