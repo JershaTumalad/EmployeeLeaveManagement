@@ -1,6 +1,4 @@
-using System.Data;
-
-﻿using System;
+using System;
 
 
 namespace EmployeeLeaveManagement
@@ -28,7 +26,7 @@ namespace EmployeeLeaveManagement
                 isValidType = true;
             } else if(leaveType == "Sick")
             {
-                isValidType = false;
+                isValidType = true;
             } else if (leaveType == "Emergency")
             {
                 isValidType = true;
@@ -97,6 +95,7 @@ namespace EmployeeLeaveManagement
             }
 
             return "Can not find employee request.";
+        }
 
         public bool HasSufficientPoints(int currentPoints, int requiredPoints)
         {

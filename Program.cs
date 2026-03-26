@@ -4,7 +4,7 @@ namespace EmployeeLeaveManagement
 {
     internal class Program
     {
-        //ito yung part na magcconnect and LeaveService at Program
+        //ito yung part na magcconnect ang LeaveServices at Program
         static LeaveService sr = new LeaveService();
         static void Main(string[] args)
         {
@@ -121,7 +121,7 @@ namespace EmployeeLeaveManagement
                         Console.WriteLine(result);
 
                         //tatanungin si user kung gusto pa niya ulit magapply ng leave req
-                        Console.Write("\nGusto mo pa bang mag-apply ng another leave? (Y/N): ");
+                        Console.Write("\nDo you want to file another leave?(Y/N): ");
                         response = Console.ReadLine().ToUpper()[0];
 
                     } while (response == 'Y'); // Kapag Y uulit, 'pag N hindi na
@@ -139,7 +139,19 @@ namespace EmployeeLeaveManagement
 
             static void ViewReq()
             {
-                Console.WriteLine("Viewing all leave requests...");
+                List<LeaveReq> requests = sr.GetAllLeaves();
+
+                if (requests.Count == 0)
+                {
+                    Console.WriteLine("No leave requests found.");
+                    return;
+                }
+
+                Console.WriteLine("\nALL LEAVE REQUESTS");
+                foreach (LeaveReq req in requests)
+                {
+                    Console.WriteLine($"ID: {req.RequestID} | Employee: {req.EmployeeID} | Type: {req.LeaveType} | {req.StartDate} to {req.EndDate} | Status: {req.Status}");
+                }
             }
 
             static void UpdateReq()
@@ -178,7 +190,6 @@ namespace EmployeeLeaveManagement
                 Console.Write("Enter Request ID to delete: ");
                 int requestID = Convert.ToInt32(Console.ReadLine());
 
-                // magtatanong muna sa user kung sigurado ba
                 Console.Write("Are you sure you want to delete this request? (Y/N): ");
                 char confirm = Console.ReadLine().ToUpper()[0];
 
