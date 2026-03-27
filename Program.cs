@@ -53,7 +53,7 @@ namespace EmployeeLeaveManagement
                 Console.WriteLine("[3] Emergency");
 
                 // iask ni system kung magaapply ba si user ng leave
-                Console.Write("\nGusto mo bang mag-apply ng leave? (Y/N): ");
+                Console.Write("\nDo you want to apply a leave? (Y/N): ");
                 char response = Console.ReadLine().ToUpper()[0];
 
                 if (response == 'Y')
@@ -157,7 +157,7 @@ namespace EmployeeLeaveManagement
             static void UpdateReq()
             {
                     Console.Write("Enter Request ID to update: ");
-                    int requestID = Convert.ToInt32(Console.ReadLine());
+                    string requestID = Console.ReadLine();
 
                     Console.WriteLine("Select new status:");
                     Console.WriteLine("[1] Approved");
@@ -188,7 +188,7 @@ namespace EmployeeLeaveManagement
             static void DeleteReq()
             {
                 Console.Write("Enter Request ID to delete: ");
-                int requestID = Convert.ToInt32(Console.ReadLine());
+                string requestID = Console.ReadLine();
 
                 Console.Write("Are you sure you want to delete this request? (Y/N): ");
                 char confirm = Console.ReadLine().ToUpper()[0];

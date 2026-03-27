@@ -1,11 +1,11 @@
 ﻿using System.Text.Json;
 
+
 namespace EmployeeLeaveManagement
 {
     public class LeaveJson
     {
         private List<LeaveReq> leaveRequests = new List<LeaveReq>();
-        private int lastID = 0;
         private string _jsonFileName;
 
         public LeaveJson()
@@ -20,18 +20,13 @@ namespace EmployeeLeaveManagement
 
             if (leaveRequests.Count <= 0) // kung walang laman, lagyan ng sample
             {
-                leaveRequests.Add(new LeaveReq { RequestID = 1, EmployeeID = "EMP001", LeaveType = "Vacation", StartDate = "2025-01-01", EndDate = "2025-01-05", Status = "Pending" });
-                leaveRequests.Add(new LeaveReq { RequestID = 2, EmployeeID = "EMP002", LeaveType = "Sick", StartDate = "2025-02-10", EndDate = "2025-02-11", Status = "Approved" });
+                leaveRequests.Add(new LeaveReq { RequestID = Guid.NewGuid().ToString(), EmployeeID = "EMP001", LeaveType = "Vacation", StartDate = "2025-01-01", EndDate = "2025-01-05", Status = "Pending" });
+                leaveRequests.Add(new LeaveReq { RequestID = Guid.NewGuid().ToString(), EmployeeID = "EMP002", LeaveType = "Sick", StartDate = "2025-02-10", EndDate = "2025-02-11", Status = "Approved" });
 
-                lastID = leaveRequests.Count;
-                SaveDataToJsonFile();
             }
-            else
-            {
-                //pag may laman na isset nito yung lastID sa pinakamataas na RequestID
-                lastID = leaveRequests.Max(x => x.RequestID);
+            
             }
-        }
+        
         private void SaveDataToJsonFile()
         {
             using (var outputStream = File.OpenWrite(_jsonFileName))
@@ -62,8 +57,7 @@ namespace EmployeeLeaveManagement
         public void AddLeave(LeaveReq leaveReq)
         {
             RetrieveDataFromJsonFile();
-            lastID = lastID + 1;
-            leaveReq.RequestID = lastID;
+           leaveReq.RequestID = Guid.NewGuid().ToString();
             leaveRequests.Add(leaveReq);
             SaveDataToJsonFile();
         }
@@ -74,7 +68,7 @@ namespace EmployeeLeaveManagement
             return leaveRequests;
         }
 
-        public bool UpdateLeave(int requestID, string newStatus)
+        public bool UpdateLeave(string requestID, string newStatus)
         {
             RetrieveDataFromJsonFile();
             var existing = leaveRequests.FirstOrDefault(x => x.RequestID == requestID);
@@ -87,7 +81,7 @@ namespace EmployeeLeaveManagement
             return false;
         }
 
-        public bool DeleteLeave(int requestID)
+        public bool DeleteLeave(string requestID)
         {
             RetrieveDataFromJsonFile();
             var existing = leaveRequests.FirstOrDefault(x => x.RequestID == requestID);

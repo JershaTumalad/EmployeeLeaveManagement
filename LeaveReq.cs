@@ -4,7 +4,7 @@ namespace EmployeeLeaveManagement
 {
     public class LeaveReq
     {
-        public int RequestID { get; set; } 
+        public string RequestID { get; set; } 
         public string EmployeeID { get; set; }
         public string LeaveType { get; set; } 
         public string StartDate { get; set; }

@@ -18,9 +18,9 @@ namespace EmployeeLeaveManagement
             {
                 return "Error: Employee ID is needed.";
             }
-            bool isValidType = false;
 
             //rule 2
+            bool isValidType = false;
             if(leaveType == "Vacation")
             {
                 isValidType = true;
@@ -57,7 +57,6 @@ namespace EmployeeLeaveManagement
 
             
             repository.AddLeave(newRequest);
-
             return "Success Apply Leave";
         }
 
@@ -66,7 +65,7 @@ namespace EmployeeLeaveManagement
             return repository.GetAllLeaves();
         }//getall ay kumukuha lahat ng req
 
-        public string UpdateLeave(int requestID, string newStatus)
+        public string UpdateLeave(string requestID, string newStatus)
         {
             
             if (newStatus != "Approved" && newStatus != "Rejected" && newStatus != "Pending")
@@ -85,7 +84,7 @@ namespace EmployeeLeaveManagement
             return "Can not find employee request.";
         }
 
-        public string DeleteLeave(int requestID)
+        public string DeleteLeave(string requestID)
         {
             bool isDeleted = repository.DeleteLeave(requestID);
 
