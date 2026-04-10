@@ -1,120 +1,145 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System;
+using Microsoft.Data.SqlClient;
 
 namespace EmployeeLeaveManagement
 {
-    public class LeaveDBData
+    public class LeaveDBData : LeaveRep
     {
-        private string connectionString =
-            "Data Source=.\\SQLEXPRESS; Initial Catalog=EmployeeLeaveManagement; Integrated Security=True; TrustServerCertificate=True;";
+        private string connectionString = "Server=DESKTOP-0OM4UEV\\SQLEXPRESS;Database=EmployeeLeaveManagement;Integrated Security=True;TrustServerCertificate=True;";
 
-        private SqlConnection sqlConnection;
-
-        public LeaveDBData()
+        public LeaveReq? GetById(Guid id)
         {
-            sqlConnection = new SqlConnection(connectionString);
-            AddSeeds();
-        }
-
-        private void AddSeeds()
-        {
-            var existing = GetAllLeaves();
-
-            if (existing.Count == 0)
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                AddLeave(new LeaveReq
+                conn.Open();
+                string query = "SELECT * FROM Leaves WHERE LeaveId = @LeaveId";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@LeaveId", id);
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
                 {
-                    EmployeeID = "EMP001",
-                    LeaveType = "Vacation",
-                    StartDate = "2025-01-01",
-                    EndDate = "2025-01-05",
-                    Status = "Pending"
-                });
-
-                AddLeave(new LeaveReq
-                {
-                    EmployeeID = "EMP002",
-                    LeaveType = "Sick",
-                    StartDate = "2025-02-10",
-                    EndDate = "2025-02-11",
-                    Status = "Approved"
-                });
+                    return new LeaveReq
+                    {
+                        LeaveId = (Guid)reader["LeaveId"],
+                        EmployeeId = (int)reader["EmployeeId"],
+                        EmployeeName = reader["EmployeeName"].ToString(),
+                        LeaveType = (LeaveType)Enum.Parse(typeof(LeaveType), reader["LeaveType"].ToString()),
+                        StartDate = (DateTime)reader["StartDate"],
+                        EndDate = (DateTime)reader["EndDate"],
+                        PointsDeducted = (int)reader["PointsDeducted"],
+                        Status = (LeaveStatus)Enum.Parse(typeof(LeaveStatus), reader["Status"].ToString()),
+                        Reason = reader["Reason"].ToString()
+                    };
+                }
+                return null;
             }
         }
 
-        public void AddLeave(LeaveReq leaveReq)
+        public List<LeaveReq> GetAll()
         {
-            var insertStatement =
-                "INSERT INTO Leaves VALUES (@LeaveId, @EmployeeId, @LeaveType, @StartDate, @EndDate, @Status)";
-
-            SqlCommand cmd = new SqlCommand(insertStatement, sqlConnection);
-            cmd.Parameters.AddWithValue("@LeaveId", Guid.NewGuid());
-            cmd.Parameters.AddWithValue("@EmployeeId", leaveReq.EmployeeID);
-            cmd.Parameters.AddWithValue("@LeaveType", leaveReq.LeaveType);
-            cmd.Parameters.AddWithValue("@StartDate", leaveReq.StartDate);
-            cmd.Parameters.AddWithValue("@EndDate", leaveReq.EndDate);
-            cmd.Parameters.AddWithValue("@Status", leaveReq.Status);
-
-            sqlConnection.Open();
-            cmd.ExecuteNonQuery();
-            sqlConnection.Close();
-        }
-
-        public List<LeaveReq> GetAllLeaves()
-        {
-            string selectStatement =
-                "SELECT LeaveId, EmployeeId, LeaveType, StartDate, EndDate, Status FROM Leaves";
-
-            SqlCommand cmd = new SqlCommand(selectStatement, sqlConnection);
-            sqlConnection.Open();
-            SqlDataReader reader = cmd.ExecuteReader();
-
-            var leaves = new List<LeaveReq>();
-
-            while (reader.Read())
+            List<LeaveReq> results = new List<LeaveReq>();
+            try
             {
-                leaves.Add(new LeaveReq
+                using (SqlConnection conn = new SqlConnection(connectionString))
                 {
-                    RequestID = reader["LeaveId"].ToString(),
-                    EmployeeID = reader["EmployeeId"].ToString(),
-                    LeaveType = reader["LeaveType"].ToString(),
-                    StartDate = reader["StartDate"].ToString(),
-                    EndDate = reader["EndDate"].ToString(),
-                    Status = reader["Status"].ToString()
-                });
+                    conn.Open();
+                    string query = "SELECT * FROM Leaves";
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        results.Add(new LeaveReq
+                        {
+                            LeaveId = Guid.Parse(reader["LeaveId"].ToString()),
+                            EmployeeId = Convert.ToInt32(reader["EmployeeId"]),
+                            EmployeeName = reader["EmployeeName"].ToString(),
+                            LeaveType = (LeaveType)Enum.Parse(typeof(LeaveType), reader["LeaveType"].ToString()),
+                            StartDate = Convert.ToDateTime(reader["StartDate"]),
+                            EndDate = Convert.ToDateTime(reader["EndDate"]),
+                            PointsDeducted = Convert.ToInt32(reader["PointsDeducted"]),
+                            Status = (LeaveStatus)Enum.Parse(typeof(LeaveStatus), reader["Status"].ToString()),
+                            Reason = reader["Reason"].ToString()
+                        });
+                    }
+                }
             }
-
-            sqlConnection.Close();
-            return leaves;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sa GetAll: {ex.Message}");
+            }
+            return results;
         }
 
-        public bool UpdateLeave(string requestID, string newStatus)
+        public void Add(LeaveReq Leaves)
         {
-            var updateStatement =
-                "UPDATE Leaves SET Status = @Status WHERE LeaveId = @LeaveId";
-
-            SqlCommand cmd = new SqlCommand(updateStatement, sqlConnection);
-            cmd.Parameters.AddWithValue("@Status", newStatus);
-            cmd.Parameters.AddWithValue("@LeaveId", requestID);
-
-            sqlConnection.Open();
-            int rows = cmd.ExecuteNonQuery();
-            sqlConnection.Close();
-
-            return rows > 0;
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                var insert = "INSERT INTO Leaves (EmployeeId, EmployeeName, LeaveType, StartDate, EndDate, Status, PointsDeducted, Reason) VALUES (@EmployeeId, @EmployeeName, @LeaveType, @StartDate, @EndDate, @Status, @PointsDeducted, @Reason)";
+                SqlCommand cmd = new SqlCommand(insert, conn);
+                cmd.Parameters.AddWithValue("@EmployeeId", Leaves.EmployeeId);
+                cmd.Parameters.AddWithValue("@EmployeeName", Leaves.EmployeeName);
+                cmd.Parameters.AddWithValue("@LeaveType", Leaves.LeaveType.ToString());
+                cmd.Parameters.AddWithValue("@StartDate", Leaves.StartDate);
+                cmd.Parameters.AddWithValue("@EndDate", Leaves.EndDate);
+                cmd.Parameters.AddWithValue("@Status", Leaves.Status.ToString());
+                cmd.Parameters.AddWithValue("@PointsDeducted", Leaves.PointsDeducted);
+                cmd.Parameters.AddWithValue("@Reason", Leaves.Reason);
+                cmd.ExecuteNonQuery();
+            }
         }
 
-        public bool DeleteLeave(string requestID)
+        public void Edit(LeaveReq Leaves)
         {
-            var deleteStatement = "DELETE FROM Leaves WHERE LeaveId = @LeaveId";
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                var update = "UPDATE Leaves SET Status = @Status WHERE LeaveId = @LeaveId";
+                SqlCommand cmd = new SqlCommand(update, conn);
+                cmd.Parameters.AddWithValue("@Status", Leaves.Status.ToString());
+                cmd.Parameters.AddWithValue("@LeaveId", Leaves.LeaveId);
+                cmd.ExecuteNonQuery();
+            }
+        }
 
-            SqlCommand cmd = new SqlCommand(deleteStatement, sqlConnection);
-            cmd.Parameters.AddWithValue("@LeaveId", requestID);
+        public void Delete(Guid id)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                var delete = "DELETE FROM Leaves WHERE LeaveId = @LeaveId";
+                SqlCommand cmd = new SqlCommand(delete, conn);
+                cmd.Parameters.AddWithValue("@LeaveId", id);
+                cmd.ExecuteNonQuery();
+            }
+        }
 
-            sqlConnection.Open();
-            int rows = cmd.ExecuteNonQuery();
-            sqlConnection.Close();
+        public int GetPoints(int employeeId)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                var getPoints = "SELECT Points FROM EmployeePoints WHERE EmployeeId = @EmployeeId";
+                SqlCommand cmd = new SqlCommand(getPoints, conn);
+                cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                    return (int)reader["Points"];
+                return 0;
+            }
+        }
 
-            return rows > 0;
+        public void UpdatePoints(int employeeId, int points)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                var update = "UPDATE EmployeePoints SET Points = @Points WHERE EmployeeId = @EmployeeId";
+                SqlCommand cmd = new SqlCommand(update, conn);
+                cmd.Parameters.AddWithValue("@Points", points);
+                cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                cmd.ExecuteNonQuery();
+            }
         }
     }
 }

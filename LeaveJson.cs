@@ -1,97 +1,128 @@
-﻿using System.Text.Json;
-
+﻿using EmployeeLeaveManagement;
+using System.Text.Json;
 
 namespace EmployeeLeaveManagement
 {
     public class LeaveJson
     {
-        private List<LeaveReq> leaveRequests = new List<LeaveReq>();
-        private string _jsonFileName;
+        private List<LeaveReq> leaves = new List<LeaveReq>();
+        private List<EmployeePoint> points = new List<EmployeePoint>();
+        private string _leavesFileName;
+        private string _pointsFileName;
 
         public LeaveJson()
         {
-            _jsonFileName = $"{AppDomain.CurrentDomain.BaseDirectory}/LeaveRequests.json";
-            PopulateJsonFile();
+            _leavesFileName = $"{AppDomain.CurrentDomain.BaseDirectory}/leaves.json";
+            _pointsFileName = $"{AppDomain.CurrentDomain.BaseDirectory}/points.json";
         }
 
-        private void PopulateJsonFile()
+        private void SaveLeavesToJsonFile()
         {
-            RetrieveDataFromJsonFile(); // basahin muna yung file
-
-            if (leaveRequests.Count <= 0) // kung walang laman, lagyan ng sample
-            {
-                leaveRequests.Add(new LeaveReq { RequestID = Guid.NewGuid().ToString(), EmployeeID = "EMP001", LeaveType = "Vacation", StartDate = "2025-01-01", EndDate = "2025-01-05", Status = "Pending" });
-                leaveRequests.Add(new LeaveReq { RequestID = Guid.NewGuid().ToString(), EmployeeID = "EMP002", LeaveType = "Sick", StartDate = "2025-02-10", EndDate = "2025-02-11", Status = "Approved" });
-
-            }
-            
-            }
-        
-        private void SaveDataToJsonFile()
-        {
-            using (var outputStream = File.OpenWrite(_jsonFileName))
+            using (var outputStream = File.OpenWrite(_leavesFileName))
             {
                 JsonSerializer.Serialize<List<LeaveReq>>(
                     new Utf8JsonWriter(outputStream, new JsonWriterOptions
                     { SkipValidation = true, Indented = true })
-                    , leaveRequests);
+                    , leaves);
             }
         }
 
-        private void RetrieveDataFromJsonFile()
+        private void RetrieveLeavesFromJsonFile()
         {
-            if (!File.Exists(_jsonFileName))
+            if (!File.Exists(_leavesFileName)) return;
+            using (var jsonFileReader = File.OpenText(_leavesFileName))
             {
-                leaveRequests = new List<LeaveReq>();
-                return;
-            }
-
-            using (var jsonFileReader = File.OpenText(_jsonFileName))
-            {
-                leaveRequests = JsonSerializer.Deserialize<List<LeaveReq>>
+                leaves = JsonSerializer.Deserialize<List<LeaveReq>>
                     (jsonFileReader.ReadToEnd(), new JsonSerializerOptions
                     { PropertyNameCaseInsensitive = true })
                     .ToList();
             }
         }
-        public void AddLeave(LeaveReq leaveReq)
+
+        private void SavePointsToJsonFile()
         {
-            RetrieveDataFromJsonFile();
-           leaveReq.RequestID = Guid.NewGuid().ToString();
-            leaveRequests.Add(leaveReq);
-            SaveDataToJsonFile();
+            using (var outputStream = File.OpenWrite(_pointsFileName))
+            {
+                JsonSerializer.Serialize<List<EmployeePoint>>(
+                    new Utf8JsonWriter(outputStream, new JsonWriterOptions
+                    { SkipValidation = true, Indented = true })
+                    , points);
+            }
         }
 
-        public List<LeaveReq> GetAllLeaves()
+        private void RetrievePointsFromJsonFile()
         {
-            RetrieveDataFromJsonFile();
-            return leaveRequests;
+            if (!File.Exists(_pointsFileName)) return;
+            using (var jsonFileReader = File.OpenText(_pointsFileName))
+            {
+                points = JsonSerializer.Deserialize<List<EmployeePoint>>
+                    (jsonFileReader.ReadToEnd(), new JsonSerializerOptions
+                    { PropertyNameCaseInsensitive = true })
+                    .ToList();
+            }
         }
 
-        public bool UpdateLeave(string requestID, string newStatus)
+        public List<LeaveReq> GetAll()
         {
-            RetrieveDataFromJsonFile();
-            var existing = leaveRequests.FirstOrDefault(x => x.RequestID == requestID);
+            RetrieveLeavesFromJsonFile();
+            return leaves;
+        }
+
+        public LeaveReq? GetById(Guid id)
+        {
+            RetrieveLeavesFromJsonFile();
+            return leaves.FirstOrDefault(x => x.LeaveId == id);
+        }
+
+        public void Add(LeaveReq leave)
+        {
+            RetrieveLeavesFromJsonFile();
+            leaves.Add(leave);
+            SaveLeavesToJsonFile();
+        }
+
+        public void Update(LeaveReq leave)
+        {
+            RetrieveLeavesFromJsonFile();
+            var existing = leaves.FirstOrDefault(x => x.LeaveId == leave.LeaveId);
             if (existing != null)
             {
-                existing.Status = newStatus;
-                SaveDataToJsonFile();
-                return true;
+                existing.EmployeeName = leave.EmployeeName;
+                existing.LeaveType = leave.LeaveType;
+                existing.StartDate = leave.StartDate;
+                existing.EndDate = leave.EndDate;
+                existing.Status = leave.Status;
+                existing.Reason = leave.Reason;
+                existing.PointsDeducted = leave.PointsDeducted;
             }
-            return false;
+            SaveLeavesToJsonFile();
         }
 
-        public bool DeleteLeave(string requestID)
+        public void Delete(Guid id)
         {
-            RetrieveDataFromJsonFile();
-            var existing = leaveRequests.FirstOrDefault(x => x.RequestID == requestID);
+            RetrieveLeavesFromJsonFile();
+            var existing = leaves.FirstOrDefault(x => x.LeaveId == id);
             if (existing != null)
-            {
-                leaveRequests.Remove(existing);
-                SaveDataToJsonFile();
-                return true;
-            }
-            return false;
+                leaves.Remove(existing);
+            SaveLeavesToJsonFile();
+        }
+
+        public int GetPoints(int employeeId)
+        {
+            RetrievePointsFromJsonFile();
+            var emp = points.FirstOrDefault(x => x.EmployeeId == employeeId);
+            return emp != null ? emp.Points : 30;
+        }
+
+        public void UpdatePoints(int employeeId, int newPoints)
+        {
+            RetrievePointsFromJsonFile();
+            var emp = points.FirstOrDefault(x => x.EmployeeId == employeeId);
+            if (emp != null)
+                emp.Points = newPoints;
+            else
+                points.Add(new EmployeePoint { EmployeeId = employeeId, Points = newPoints });
+            SavePointsToJsonFile();
         }
     }
 }
