@@ -3,92 +3,87 @@ namespace EmployeeLeaveManagement
 {
     public class LeaveService
     {
-        private readonly LeaveDataService _LeaveDataService;
+        private readonly LeaveRep _repo;
 
-        public LeaveService()
+        public LeaveService(LeaveRep repo)
         {
-            _LeaveDataService = new LeaveDataService();
+            _repo = repo;
         }
 
-        public string ApplyLeave(string employeeID, string leaveType, string startDate, string endDate)
+        public string ApplyLeave(int employeeId, string employeeName, string leaveType, DateTime startDate, DateTime endDate, string reason)
         {
-            DateTime start = DateTime.Parse(startDate);
-            DateTime end = DateTime.Parse(endDate);
+            if (startDate < DateTime.Today)
+                return "Invalid dates. Start date cannot be in the past.";
 
-            if (start < DateTime.Today)
-                return "Invalid dates. Start date can not be in the past.";
+            if (endDate < startDate)
+                return "Invalid dates. End date cannot be earlier than start date.";
 
-            if (end < start)
-                return "Invalid dates. End date can not be earlier than start date";
+            int leaveDays = (endDate - startDate).Days + 1;
+            int pointsNeeded = leaveType switch
+            {
+                "Vacation" => leaveDays * 2,
+                "Sick" => leaveDays * 1,
+                "Emergency" => leaveDays * 1,
+                _ => leaveDays * 1
+            };
 
-            int leaveDays = (end - start).Days + 1;
-            int pointsNeeded = 0;
-
-            if (leaveType == "Vacation")
-                pointsNeeded = leaveDays * 2;
-            else if (leaveType == "Sick")
-                pointsNeeded = leaveDays * 1;
-            else if (leaveType == "Emergency")
-                pointsNeeded = leaveDays * 1;
-            else if (leaveType == "Maternity")
-                pointsNeeded = leaveDays * 3;
-
-            int currentPoints = _LeaveDataService.ViewPoints(int.Parse(employeeID));
+            int currentPoints = _repo.GetPoints(employeeId);
             if (currentPoints < pointsNeeded)
                 return "Insufficient points!";
 
             var leave = new LeaveReq
             {
                 LeaveId = Guid.NewGuid(),
-                EmployeeId = int.Parse(employeeID),
+                EmployeeId = employeeId,
+                EmployeeName = employeeName,
                 LeaveType = (LeaveType)Enum.Parse(typeof(LeaveType), leaveType),
-                StartDate = start,
-                EndDate = end,
+                StartDate = startDate,
+                EndDate = endDate,
                 PointsDeducted = pointsNeeded,
-                Status = LeaveStatus.Pending
+                Status = LeaveStatus.Pending,
+                Reason = reason
             };
 
-            _LeaveDataService.ApplyLeave(
-                leave.EmployeeId,
-                leave.EmployeeName,
-                leave.LeaveType,
-                leave.StartDate,
-                leave.EndDate,
-                leave.Reason
-            );
+            _repo.Add(leave);
+            _repo.UpdatePoints(employeeId, currentPoints - pointsNeeded);
 
             return "Leave filed successfully!";
         }
 
         public List<LeaveReq> GetAllLeaves()
         {
-            return _LeaveDataService.GetAllLeaves();
+            return _repo.GetAll();
         }
 
-        public string UpdateLeave(string requestId, string newStatus)
+        public LeaveReq? GetById(Guid id)
         {
-            var leave = _LeaveDataService.GetById(Guid.Parse(requestId));
+            return _repo.GetById(id);
+        }
+
+        public string UpdateLeave(Guid requestId, string newStatus)
+        {
+            var leave = _repo.GetById(requestId);
             if (leave == null)
                 return "Request not found. Try again.";
 
             leave.Status = (LeaveStatus)Enum.Parse(typeof(LeaveStatus), newStatus);
-            _LeaveDataService.Update(leave);
+            _repo.Edit(leave);
             return "Change successful.";
         }
 
-        public string DeleteLeave(string requestId)
+        public string DeleteLeave(Guid requestId)
         {
-            var leave = _LeaveDataService.GetById(Guid.Parse(requestId));
+            var leave = _repo.GetById(requestId);
             if (leave == null)
                 return "Request not found. Try again.";
 
-            _LeaveDataService.Delete(leave.LeaveId);
+            _repo.Delete(leave.LeaveId);
             return "Delete successful.";
         }
 
         public int GetPoints(int employeeId)
         {
-            return _LeaveDataService.ViewPoints(employeeId);
+            return _repo.GetPoints(employeeId);
         }
     }
 }

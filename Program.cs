@@ -4,19 +4,18 @@ namespace EmployeeLeaveManagement
 {
     internal class Program
     {
-        static LeaveDataService service = new LeaveDataService();
-        static LeaveJson jsonService = new LeaveJson();
+        
+        static LeaveService service = new LeaveService(new LeaveDBData());
 
         static void Main(string[] args)
         {
             bool running = true;
             while (running)
             {
-                Console.WriteLine("Welcome to Employee Leave Management System");
+                Console.WriteLine("\nWelcome to Employee Leave Management System");
                 Console.WriteLine("[1] Login");
                 Console.WriteLine("[0] Exit");
                 Console.Write("You choose: ");
-                Console.Write('\n');
                 int choice = Convert.ToInt32(Console.ReadLine());
 
                 switch (choice)
@@ -45,11 +44,10 @@ namespace EmployeeLeaveManagement
 
         static void AdminLogin(string username, string password)
         {
-
             bool loggedIn = true;
             while (loggedIn)
             {
-                Console.WriteLine("\nWelcome Admin/HR " + username);
+                Console.WriteLine("Welcome Admin/HR " + username);
                 Console.WriteLine("[1] View all Leave Requests");
                 Console.WriteLine("[2] Approve / Reject Leave");
                 Console.WriteLine("[3] View Employee Points");
@@ -77,17 +75,10 @@ namespace EmployeeLeaveManagement
             static void ViewAllLeaveRequest()
             {
                 List<LeaveReq> requests = service.GetAllLeaves();
-                if (requests.Count == 0)
-                {
-                    Console.WriteLine("No leave requests found.");
-                    return;
-                }
+                if (requests.Count == 0) { Console.WriteLine("No leave requests found."); return; }
                 Console.WriteLine("\nALL LEAVE REQUESTS");
                 foreach (LeaveReq req in requests)
-                {
-                    Console.WriteLine($"LeaveId: {req.LeaveId} | EmployeeId: {req.EmployeeId} | Name: {req.EmployeeName} | Type: {req.LeaveType} | {req.StartDate.ToShortDateString()} to {req.EndDate.ToShortDateString()} | Status: {req.Status} | Points: {req.PointsDeducted}");
-                    Console.Write('\n');
-                }
+                    Console.WriteLine($"LeaveId: {req.LeaveId} | EmployeeId: {req.EmployeeId} | Name: {req.EmployeeName} | Type: {req.LeaveType} | {req.StartDate.ToShortDateString()} to {req.EndDate.ToShortDateString()} | Status: {req.Status} | Points: {req.PointsDeducted}\n");
             }
 
             static void ApproveOrRejectRequest()
@@ -96,11 +87,7 @@ namespace EmployeeLeaveManagement
                 while (running)
                 {
                     List<LeaveReq> requests = service.GetAllLeaves();
-                    if (requests.Count == 0)
-                    {
-                        Console.WriteLine("No leave requests found.");
-                        return;
-                    }
+                    if (requests.Count == 0) { Console.WriteLine("No leave requests found."); return; }
 
                     Console.WriteLine("\nALL LEAVE REQUESTS");
                     foreach (LeaveReq req in requests)
@@ -108,24 +95,32 @@ namespace EmployeeLeaveManagement
 
                     Console.Write("\nEnter Leave ID to approve/reject (or 'exit' to go back): ");
                     string input = Console.ReadLine();
-
                     if (input.ToLower() == "exit") break;
 
-                    Guid leaveId = Guid.Parse(input);
-                    LeaveReq selected = service.GetById(leaveId);
-                    if (selected == null) { Console.WriteLine("Leave request not found."); continue; }
+                    if (!Guid.TryParse(input, out Guid leaveId)) { 
+                        Console.WriteLine("Invalid ID format."); 
+                        continue; }
 
                     Console.WriteLine("[1] Approve");
                     Console.WriteLine("[2] Reject");
                     Console.Write("Enter your choice: ");
                     int choice = Convert.ToInt32(Console.ReadLine());
 
-                    if (choice == 1) { 
-                        selected.Status = LeaveStatus.Approved; service.Update(selected); Console.WriteLine("Leave request approved!"); 
-                    }else if (choice == 2) { 
-                        selected.Status = LeaveStatus.Rejected; service.Update(selected); Console.WriteLine("Leave request rejected!"); 
-                    }else Console.WriteLine("Invalid choice.");
+                    string newStatus = choice == 1 ? "Approved" : choice == 2 ? "Rejected" : null;
+                    if (newStatus == null) { 
+                        Console.WriteLine("Invalid choice."
+                     ); continue; }
+
+                    Console.WriteLine(service.UpdateLeave(leaveId, newStatus));
                 }
+            }
+
+            static void ViewEmployeePoints()
+            {
+                Console.Write("Enter Employee ID: ");
+                int empId = Convert.ToInt32(Console.ReadLine());
+                int points = service.GetPoints(empId);
+                Console.WriteLine($"Employee {empId} has {points} points remaining.");
             }
 
             static void DeleteLeaveRequest()
@@ -134,11 +129,7 @@ namespace EmployeeLeaveManagement
                 while (running)
                 {
                     List<LeaveReq> requests = service.GetAllLeaves();
-                    if (requests.Count == 0)
-                    {
-                        Console.WriteLine("No leave requests found.");
-                        return;
-                    }
+                    if (requests.Count == 0) { Console.WriteLine("No leave requests found."); return; }
 
                     Console.WriteLine("\nALL LEAVE REQUESTS");
                     foreach (LeaveReq req in requests)
@@ -146,28 +137,13 @@ namespace EmployeeLeaveManagement
 
                     Console.Write("\nEnter Leave ID to delete (or 'exit' to go back): ");
                     string input = Console.ReadLine();
-
                     if (input.ToLower() == "exit") break;
 
-                    Guid leaveId = Guid.Parse(input);
-                    LeaveReq selected = service.GetById(leaveId);
-                    if (selected == null) { 
-                        Console.WriteLine("Leave request not found."); continue; 
-                    }
+                    if (!Guid.TryParse(input, out Guid leaveId)) { Console.WriteLine("Invalid ID format."); continue; }
 
-                    service.Delete(leaveId);
-                    Console.WriteLine("Leave request deleted successfully!");
+                    Console.WriteLine(service.DeleteLeave(leaveId));
                 }
             }
-
-            static void ViewEmployeePoints()
-            {
-                Console.Write("Enter Employee ID: ");
-                int empId = Convert.ToInt32(Console.ReadLine());
-                int points = service.ViewPoints(empId);
-                Console.WriteLine($"Employee {empId} has {points} points remaining.");
-            }
-
         }
 
         static void EmployeeLogin(int employeeId, string password)
@@ -175,20 +151,25 @@ namespace EmployeeLeaveManagement
             bool loggedIn = true;
             while (loggedIn)
             {
-                Console.WriteLine("Welcome Employee " + employeeId);
+                Console.WriteLine("\nWelcome Employee " + employeeId);
                 Console.WriteLine("[1] File a Leave Request");
                 Console.WriteLine("[2] View My Leave Requests");
                 Console.WriteLine("[3] View My Points");
                 Console.WriteLine("[0] Exit");
                 Console.Write("Enter your choice: ");
-                Console.Write('\n');
                 int choice = Convert.ToInt32(Console.ReadLine());
 
                 switch (choice)
                 {
-                    case 1: ApplyLeave(); break;
-                    case 2: ViewReq(); break;
-                    case 3: ViewPoints(employeeId); break;
+                    case 1: 
+                        ApplyLeave(employeeId); 
+                        break;
+                    case 2: 
+                        ViewReq(employeeId); 
+                        break;
+                    case 3: 
+                        ViewPoints(employeeId); 
+                        break;
                     case 0:
                         Console.WriteLine("Logging out...");
                         loggedIn = false;
@@ -199,111 +180,73 @@ namespace EmployeeLeaveManagement
                 }
             }
 
-            static void ApplyLeave()
+            static void ApplyLeave(int employeeId)
             {
                 Console.Write("\nDo you want to request leave? (Y/N): ");
                 char response = Console.ReadLine().ToUpper()[0];
-                Console.Write('\n');
 
-                if (response == 'Y')
-                {
-                    do
-                    {
-                        Console.Write("Enter Employee ID: ");
-                        int employeeID = Convert.ToInt32(Console.ReadLine());
-
-                        Console.Write("Enter Name: ");
-                        string employeeName = Console.ReadLine();
-
-                        Console.WriteLine("Leave Types: ");
-                        Console.WriteLine("[1] Vacation Leave");
-                        Console.WriteLine("[2] Sick Leave");
-                        Console.WriteLine("[3] Emergency Leave");
-                        Console.Write("Enter the leave type you want to apply for: ");
-                        int leave = Convert.ToInt32(Console.ReadLine());
-
-                        LeaveType leaveType;
-                        if (leave == 1)
-                            leaveType = LeaveType.Vacation;
-                        else if (leave == 2)
-                            leaveType = LeaveType.Sick;
-                        else if (leave == 3)
-                            leaveType = LeaveType.Emergency;
-                        else
-                        {
-                            Console.WriteLine("Invalid leave type!");
-                            continue;
-                        }
-
-                        Console.Write("Enter Start Date (ex. 2025-12-01): ");
-                        DateTime startDate = DateTime.Parse(Console.ReadLine());
-
-                        Console.Write("Enter End Date (ex. 2025-12-05): ");
-                        DateTime endDate = DateTime.Parse(Console.ReadLine());
-
-                        Console.Write("Enter Reason: ");
-                        string reason = Console.ReadLine();
-
-                        Console.WriteLine("\nLEAVE REQUEST SUMMARY");
-                        Console.WriteLine($"Employee ID   : {employeeID}");
-                        Console.WriteLine($"Employee Name : {employeeName}");
-                        Console.WriteLine($"Leave Type    : {leaveType}");
-                        Console.WriteLine($"Start Date    : {startDate.ToShortDateString()}");
-                        Console.WriteLine($"End Date      : {endDate.ToShortDateString()}");
-                        Console.WriteLine($"Reason        : {reason}");
-
-                        try
-                        {
-                            service.ApplyLeave(employeeID, employeeName, leaveType, startDate, endDate, reason);
-                            Console.WriteLine("\nLeave request submitted successfully!");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error: {ex.Message}");
-                        }
-                        Console.Write("\nDo you want to file another leave? (Y/N): ");
-                        response = Console.ReadLine().ToUpper()[0];
-
-                    } while (response == 'Y');
-                    Console.WriteLine("Exiting...");
+                if (response != 'Y') { 
+                    Console.WriteLine("Cancelled."); 
+                    return; 
                 }
-                else if (response == 'N')
+
+                do
                 {
-                    Console.WriteLine("Exiting the system.\n");
-                }
-                else
-                {
-                    Console.WriteLine("Invalid input. Please enter Y or N.\n");
-                }
+                    Console.Write("Enter Name: ");
+                    string employeeName = Console.ReadLine();
+
+                    Console.WriteLine("Leave Types: [1] Vacation  [2] Sick  [3] Emergency");
+                    Console.Write("Choose: ");
+                    int leaveChoice = Convert.ToInt32(Console.ReadLine());
+                    string leaveType = leaveChoice == 1 ? "Vacation" : leaveChoice == 2 ? "Sick" : leaveChoice == 3 ? "Emergency" : null;
+                    if (leaveType == null) { 
+                        Console.WriteLine("Invalid leave type!"
+                    ); 
+                        continue; }
+
+                    Console.Write("Enter Start Date (ex. 2025-12-01): ");
+                    DateTime startDate = DateTime.Parse(Console.ReadLine());
+
+                    Console.Write("Enter End Date (ex. 2025-12-05): ");
+                    DateTime endDate = DateTime.Parse(Console.ReadLine());
+
+                    Console.Write("Enter Reason: ");
+                    string reason = Console.ReadLine();
+
+                    string result = service.ApplyLeave(employeeId, employeeName, leaveType, startDate, endDate, reason);
+                    Console.WriteLine(result);
+
+                    Console.Write("\nDo you want to file another leave? (Y/N): ");
+                    response = Console.ReadLine().ToUpper()[0];
+
+                } while (response == 'Y');
             }
-            static void ViewReq()
-            {
-                List<LeaveReq> requests = service.GetAllLeaves();
 
-                if (requests.Count == 0)
-                {
-                    Console.WriteLine("No leave requests found.\n");
-                    return;
-                }
+            static void ViewReq(int employeeId)
+            {
+                List<LeaveReq> requests = service.GetAllLeaves()
+                    .Where(x => x.EmployeeId == employeeId)
+                    .ToList();
+
+                if (requests.Count == 0) { Console.WriteLine("No leave requests found."); return; }
 
                 Console.WriteLine("\nMY LEAVE REQUESTS");
                 foreach (LeaveReq req in requests)
                 {
-                    Console.WriteLine("\n========================");
+                    Console.WriteLine("========================");
                     Console.WriteLine($"Type        : {req.LeaveType}");
                     Console.WriteLine($"Start Date  : {req.StartDate.ToShortDateString()}");
                     Console.WriteLine($"End Date    : {req.EndDate.ToShortDateString()}");
                     Console.WriteLine($"Status      : {req.Status}");
                     Console.WriteLine($"Points      : {req.PointsDeducted}");
-                    Console.WriteLine("========================");
-                    Console.Write('\n');
+                    Console.WriteLine("========================\n");
                 }
             }
 
-            static void ViewPoints(int employeeId)
+            static void ViewPoints(int empId)
             {
-                int points = service.ViewPoints(employeeId);
-                Console.WriteLine($"You have {points} points remaining.\n");
+                int points = service.GetPoints(empId);
+                Console.WriteLine($"You have {points} points remaining.");
             }
         }
     }
