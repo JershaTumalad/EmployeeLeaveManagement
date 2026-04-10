@@ -16,7 +16,11 @@ namespace EmployeeLeaveManagement
                 Console.WriteLine("[1] Login");
                 Console.WriteLine("[0] Exit");
                 Console.Write("You choose: ");
-                int choice = Convert.ToInt32(Console.ReadLine());
+                if (!int.TryParse(Console.ReadLine(), out int choice))
+                {
+                    Console.WriteLine("Invalid input. Please enter a number.");
+                    continue;
+                }
 
                 switch (choice)
                 {
@@ -54,7 +58,11 @@ namespace EmployeeLeaveManagement
                 Console.WriteLine("[4] Delete Leave Request");
                 Console.WriteLine("[0] Logout");
                 Console.Write("Enter your choice: ");
-                int choice = Convert.ToInt32(Console.ReadLine());
+                if (!int.TryParse(Console.ReadLine(), out int choice))
+                {
+                    Console.WriteLine("Invalid input. Please enter a number.");
+                    continue;
+                }
 
                 switch (choice)
                 {
@@ -104,7 +112,11 @@ namespace EmployeeLeaveManagement
                     Console.WriteLine("[1] Approve");
                     Console.WriteLine("[2] Reject");
                     Console.Write("Enter your choice: ");
-                    int choice = Convert.ToInt32(Console.ReadLine());
+                    if (!int.TryParse(Console.ReadLine(), out int choice))
+                    {
+                        Console.WriteLine("Invalid input. Please enter a number.");
+                        continue;
+                    }
 
                     string newStatus = choice == 1 ? "Approved" : choice == 2 ? "Rejected" : null;
                     if (newStatus == null) { 
@@ -118,7 +130,11 @@ namespace EmployeeLeaveManagement
             static void ViewEmployeePoints()
             {
                 Console.Write("Enter Employee ID: ");
-                int empId = Convert.ToInt32(Console.ReadLine());
+                if (!int.TryParse(Console.ReadLine(), out int empId))
+                {
+                    Console.WriteLine("Invalid input. Please enter a number.");
+                    return;
+                }
                 int points = service.GetPoints(empId);
                 Console.WriteLine($"Employee {empId} has {points} points remaining.");
             }
@@ -157,7 +173,11 @@ namespace EmployeeLeaveManagement
                 Console.WriteLine("[3] View My Points");
                 Console.WriteLine("[0] Exit");
                 Console.Write("Enter your choice: ");
-                int choice = Convert.ToInt32(Console.ReadLine());
+                if (!int.TryParse(Console.ReadLine(), out int choice))
+                {
+                    Console.WriteLine("Invalid input. Please enter a number.");
+                    continue;
+                }
 
                 switch (choice)
                 {
@@ -197,18 +217,26 @@ namespace EmployeeLeaveManagement
 
                     Console.WriteLine("Leave Types: [1] Vacation  [2] Sick  [3] Emergency");
                     Console.Write("Choose: ");
-                    int leaveChoice = Convert.ToInt32(Console.ReadLine());
+                    if (!int.TryParse(Console.ReadLine(), out int leaveChoice))
+                    {
+                        Console.WriteLine("Invalid input. Please enter a number.");
+                        continue;
+                    }
                     string leaveType = leaveChoice == 1 ? "Vacation" : leaveChoice == 2 ? "Sick" : leaveChoice == 3 ? "Emergency" : null;
-                    if (leaveType == null) { 
-                        Console.WriteLine("Invalid leave type!"
-                    ); 
-                        continue; }
 
                     Console.Write("Enter Start Date (ex. 2025-12-01): ");
-                    DateTime startDate = DateTime.Parse(Console.ReadLine());
+                    if (!DateTime.TryParse(Console.ReadLine(), out DateTime startDate))
+                    {
+                        Console.WriteLine("Invalid date format. Please try again.");
+                        continue;
+                    }
 
                     Console.Write("Enter End Date (ex. 2025-12-05): ");
-                    DateTime endDate = DateTime.Parse(Console.ReadLine());
+                    if (!DateTime.TryParse(Console.ReadLine(), out DateTime endDate))
+                    {
+                        Console.WriteLine("Invalid date format. Please try again.");
+                        continue;
+                    }
 
                     Console.Write("Enter Reason: ");
                     string reason = Console.ReadLine();
