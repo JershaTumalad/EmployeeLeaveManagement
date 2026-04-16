@@ -10,6 +10,9 @@ namespace EmployeeLeaveManagement
         void Delete(Guid id);
         int GetPoints(int employeeId);
         void UpdatePoints(int employeeId, int points);
+
+        List<LeaveReq> GetLeavesByEmployee(int employeeId);
+        List<LeaveReq> GetLeavesByStatus(LeaveStatus status);
     }
 
     public enum LeaveStatus

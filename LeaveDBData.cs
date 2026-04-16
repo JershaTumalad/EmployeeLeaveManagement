@@ -141,5 +141,63 @@ namespace EmployeeLeaveManagement
                 cmd.ExecuteNonQuery();
             }
         }
+
+        public List<LeaveReq> GetLeavesByEmployee(int employeeId)
+        {
+            List<LeaveReq> results = new List<LeaveReq>();
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT * FROM Leaves WHERE EmployeeId = @EmployeeId";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    results.Add(new LeaveReq
+                    {
+                        LeaveId = Guid.Parse(reader["LeaveId"].ToString()),
+                        EmployeeId = Convert.ToInt32(reader["EmployeeId"]),
+                        EmployeeName = reader["EmployeeName"].ToString(),
+                        LeaveType = (LeaveType)Enum.Parse(typeof(LeaveType), reader["LeaveType"].ToString()),
+                        StartDate = Convert.ToDateTime(reader["StartDate"]),
+                        EndDate = Convert.ToDateTime(reader["EndDate"]),
+                        PointsDeducted = Convert.ToInt32(reader["PointsDeducted"]),
+                        Status = (LeaveStatus)Enum.Parse(typeof(LeaveStatus), reader["Status"].ToString()),
+                        Reason = reader["Reason"].ToString()
+                    });
+                }
+            }
+            return results;
+        }
+
+        public List<LeaveReq> GetLeavesByStatus(LeaveStatus status)
+        {
+            List<LeaveReq> results = new List<LeaveReq>();
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT * FROM Leaves WHERE Status = @Status";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Status", status.ToString());
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    results.Add(new LeaveReq
+                    {
+                        LeaveId = Guid.Parse(reader["LeaveId"].ToString()),
+                        EmployeeId = Convert.ToInt32(reader["EmployeeId"]),
+                        EmployeeName = reader["EmployeeName"].ToString(),
+                        LeaveType = (LeaveType)Enum.Parse(typeof(LeaveType), reader["LeaveType"].ToString()),
+                        StartDate = Convert.ToDateTime(reader["StartDate"]),
+                        EndDate = Convert.ToDateTime(reader["EndDate"]),
+                        PointsDeducted = Convert.ToInt32(reader["PointsDeducted"]),
+                        Status = (LeaveStatus)Enum.Parse(typeof(LeaveStatus), reader["Status"].ToString()),
+                        Reason = reader["Reason"].ToString()
+                    });
+                }
+            }
+            return results;
+        }
     }
 }

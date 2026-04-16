@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace EmployeeLeaveManagement
 {
-    public class LeaveJson
+    public class LeaveJson : LeaveRep
     {
         private List<LeaveReq> leaves = new List<LeaveReq>();
         private List<EmployeePoint> points = new List<EmployeePoint>();
@@ -15,16 +15,16 @@ namespace EmployeeLeaveManagement
             _leavesFileName = $"{AppDomain.CurrentDomain.BaseDirectory}/leaves.json";
             _pointsFileName = $"{AppDomain.CurrentDomain.BaseDirectory}/points.json";
         }
-
         private void SaveLeavesToJsonFile()
         {
-            using (var outputStream = File.OpenWrite(_leavesFileName))
-            {
-                JsonSerializer.Serialize<List<LeaveReq>>(
-                    new Utf8JsonWriter(outputStream, new JsonWriterOptions
-                    { SkipValidation = true, Indented = true })
-                    , leaves);
-            }
+            string json = JsonSerializer.Serialize(leaves, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_leavesFileName, json);
+        }
+
+        private void SavePointsToJsonFile()
+        {
+            string json = JsonSerializer.Serialize(points, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_pointsFileName, json);
         }
 
         private void RetrieveLeavesFromJsonFile()
@@ -39,16 +39,6 @@ namespace EmployeeLeaveManagement
             }
         }
 
-        private void SavePointsToJsonFile()
-        {
-            using (var outputStream = File.OpenWrite(_pointsFileName))
-            {
-                JsonSerializer.Serialize<List<EmployeePoint>>(
-                    new Utf8JsonWriter(outputStream, new JsonWriterOptions
-                    { SkipValidation = true, Indented = true })
-                    , points);
-            }
-        }
 
         private void RetrievePointsFromJsonFile()
         {
@@ -81,7 +71,7 @@ namespace EmployeeLeaveManagement
             SaveLeavesToJsonFile();
         }
 
-        public void Update(LeaveReq leave)
+        public void Edit(LeaveReq leave)
         {
             RetrieveLeavesFromJsonFile();
             var existing = leaves.FirstOrDefault(x => x.LeaveId == leave.LeaveId);
@@ -124,5 +114,19 @@ namespace EmployeeLeaveManagement
                 points.Add(new EmployeePoint { EmployeeId = employeeId, Points = newPoints });
             SavePointsToJsonFile();
         }
+
+        public List<LeaveReq> GetLeavesByEmployee(int employeeId)
+        {
+            RetrieveLeavesFromJsonFile();
+            return leaves.Where(x => x.EmployeeId == employeeId).ToList();
+        }
+
+        public List<LeaveReq> GetLeavesByStatus(LeaveStatus status)
+        {
+            RetrieveLeavesFromJsonFile();
+            return leaves.Where(x => x.Status == status).ToList();
+        }
+
+        
     }
 }

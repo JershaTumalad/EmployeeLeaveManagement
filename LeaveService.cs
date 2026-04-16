@@ -45,8 +45,7 @@ namespace EmployeeLeaveManagement
             };
 
             _repo.Add(leave);
-            _repo.UpdatePoints(employeeId, currentPoints - pointsNeeded);
-
+            
             return "Leave filed successfully!";
         }
 
@@ -66,10 +65,27 @@ namespace EmployeeLeaveManagement
             if (leave == null)
                 return "Request not found. Try again.";
 
-            leave.Status = (LeaveStatus)Enum.Parse(typeof(LeaveStatus), newStatus);
+            LeaveStatus parsedStatus = (LeaveStatus)Enum.Parse(typeof(LeaveStatus), newStatus);
+
+            if (parsedStatus == LeaveStatus.Approved && leave.Status == LeaveStatus.Pending)
+            {
+                int currentPoints = _repo.GetPoints(leave.EmployeeId);
+                if (currentPoints < leave.PointsDeducted)
+                    return "Employee has insufficient points!";
+                _repo.UpdatePoints(leave.EmployeeId, currentPoints - leave.PointsDeducted);
+            }
+
+            if (parsedStatus == LeaveStatus.Rejected && leave.Status == LeaveStatus.Approved)
+            {
+                int currentPoints = _repo.GetPoints(leave.EmployeeId);
+                _repo.UpdatePoints(leave.EmployeeId, currentPoints + leave.PointsDeducted);
+            }
+
+            leave.Status = parsedStatus;
             _repo.Edit(leave);
-            return "Change successful.";
+            return $"Leave {newStatus} successfully.";
         }
+        
 
         public string DeleteLeave(Guid requestId)
         {
@@ -85,5 +101,12 @@ namespace EmployeeLeaveManagement
         {
             return _repo.GetPoints(employeeId);
         }
+
+        public List<LeaveReq> GetLeavesByEmployee(int employeeId)
+            => _repo.GetLeavesByEmployee(employeeId);
+
+        public List<LeaveReq> GetLeavesByStatus(LeaveStatus status)
+            => _repo.GetLeavesByStatus(status);
+
     }
 }
