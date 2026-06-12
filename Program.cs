@@ -12,7 +12,7 @@ namespace EmployeeLeaveManagement
             bool running = true;
             while (running)
             {
-                Console.WriteLine("\nWelcome to Employee Leave Management System");
+                Console.WriteLine("Welcome to Employee Leave Management System");
                 Console.WriteLine("[1] Login");
                 Console.WriteLine("[0] Exit");
                 Console.Write("You choose: ");

@@ -1,0 +1,13 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+GET https://localhost:7237/api/leaveapi/all
+Accept: application/json
+
+###
+
+GET https://localhost:7237/api/leaveapi/employee/101
+Accept: application/json
+
+###
+
+GET https://localhost:7237/api/leaveapi/points/101
+Accept: application/json
